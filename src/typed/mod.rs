@@ -109,6 +109,7 @@ impl_static_typed_generic! {
     for mlua::AnyUserData => "userdata",
     for mlua::String => "string",
     for mlua::Thread => "thread",
+    for mlua::Value => "any"
 }
 
 impl<T: Typed> Typed for Variadic<T> {
