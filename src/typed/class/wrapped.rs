@@ -52,8 +52,8 @@ impl<'ctx, T: UserData, U: UserDataFields<T>> TypedDataFields<T> for WrappedBuil
         GET: 'static + MaybeSend + Fn(&Lua, AnyUserData) -> mlua::Result<R>,
         SET: 'static + MaybeSend + Fn(&Lua, AnyUserData, A) -> mlua::Result<()>,
     {
-        self.0.add_field_function_get(name, get);
-        self.0.add_field_function_set(name, set);
+        self.0.add_field_function_get(name.as_ref(), get);
+        self.0.add_field_function_set(name.as_ref(), set);
     }
 
     fn add_field_method_set<S, A, M>(&mut self, name: &S, method: M)
@@ -62,7 +62,7 @@ impl<'ctx, T: UserData, U: UserDataFields<T>> TypedDataFields<T> for WrappedBuil
         A: FromLua + Typed,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> mlua::Result<()>,
     {
-        self.0.add_field_method_set(name, method)
+        self.0.add_field_method_set(name.as_ref(), method)
     }
 
     fn add_field_method_get<S, R, M>(&mut self, name: &S, method: M)
@@ -71,7 +71,7 @@ impl<'ctx, T: UserData, U: UserDataFields<T>> TypedDataFields<T> for WrappedBuil
         R: IntoLua + Typed,
         M: 'static + MaybeSend + Fn(&Lua, &T) -> mlua::Result<R>,
     {
-        self.0.add_field_method_get(name, method)
+        self.0.add_field_method_get(name.as_ref(), method)
     }
 
     fn add_field_method_get_set<S, R, A, GET, SET>(&mut self, name: &S, get: GET, set: SET)
@@ -82,8 +82,8 @@ impl<'ctx, T: UserData, U: UserDataFields<T>> TypedDataFields<T> for WrappedBuil
         GET: 'static + MaybeSend + Fn(&Lua, &T) -> mlua::Result<R>,
         SET: 'static + MaybeSend + Fn(&Lua, &mut T, A) -> mlua::Result<()>,
     {
-        self.0.add_field_method_get(name, get);
-        self.0.add_field_method_set(name, set);
+        self.0.add_field_method_get(name.as_ref(), get);
+        self.0.add_field_method_set(name.as_ref(), set);
     }
 
     fn add_meta_field<R, F>(&mut self, meta: MetaMethod, f: F)
@@ -107,7 +107,7 @@ impl<'ctx, T: UserData, U: UserDataMethods<T>> TypedDataMethods<T> for WrappedBu
         R: IntoLuaMulti + TypedMultiValue,
         M: 'static + MaybeSend + Fn(&Lua, &T, A) -> mlua::Result<R>,
     {
-        self.0.add_method(name, method)
+        self.0.add_method(name.as_ref(), method)
     }
 
     fn add_method_with<S, A, R, M, G>(&mut self, name: &S, method: M, _generator: G)
@@ -128,7 +128,7 @@ impl<'ctx, T: UserData, U: UserDataMethods<T>> TypedDataMethods<T> for WrappedBu
         R: IntoLuaMulti + TypedMultiValue,
         F: 'static + MaybeSend + Fn(&Lua, A) -> mlua::Result<R>,
     {
-        self.0.add_function(name, function)
+        self.0.add_function(name.as_ref(), function)
     }
 
     fn add_function_with<S, A, R, F, G>(&mut self, name: &S, function: F, _generator: G)
@@ -149,7 +149,7 @@ impl<'ctx, T: UserData, U: UserDataMethods<T>> TypedDataMethods<T> for WrappedBu
         R: IntoLuaMulti + TypedMultiValue,
         M: 'static + MaybeSend + FnMut(&Lua, &mut T, A) -> mlua::Result<R>,
     {
-        self.0.add_method_mut(name, method)
+        self.0.add_method_mut(name.as_ref(), method)
     }
 
     fn add_method_mut_with<S, A, R, M, G>(&mut self, name: &S, method: M, _generator: G)
