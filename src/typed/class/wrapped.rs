@@ -1,4 +1,10 @@
-use mlua::{AnyUserData, FromLua, FromLuaMulti, IntoLua, IntoLuaMulti, Lua, MetaMethod, UserData, UserDataFields, UserDataMethods};
+use mlua::{
+    AnyUserData, FromLua, FromLuaMulti, IntoLua, IntoLuaMulti, Lua, MetaMethod, UserData,
+    UserDataFields, UserDataMethods,
+};
+
+#[cfg(feature = "async")]
+use mlua::{UserDataRef, UserDataRefMut};
 
 use crate::{typed::generator::FunctionBuilder, MaybeSend};
 
@@ -183,55 +189,61 @@ impl<'ctx, T: UserData, U: UserDataMethods<T>> TypedDataMethods<T> for WrappedBu
     }
 
     #[cfg(feature = "async")]
-    fn add_async_method<'s, S: ?Sized + AsRef<str>, A, R, M, MR>(&mut self, name: &S, method: M)
+    fn add_async_method<S: ?Sized + AsRef<str>, A, R, M, MR>(&mut self, name: &S, method: M)
     where
-        'lua: 's,
         T: 'static,
-        M: Fn(&'lua Lua, &'s T, A) -> MR + MaybeSend + 'static,
-        A: FromLuaMulti<'lua> + TypedMultiValue,
-        MR: std::future::Future<Output = mlua::Result<R>> + 's,
-        R: IntoLuaMulti<'lua>,
+        M: Fn(Lua, UserDataRef<T>, A) -> MR + MaybeSend + 'static,
+        A: FromLuaMulti + TypedMultiValue,
+        MR: std::future::Future<Output = mlua::Result<R>> + 'static,
+        R: IntoLuaMulti,
     {
-        self.0.add_async_method(name, method)
+        self.0.add_async_method(name.as_ref(), method)
     }
 
     #[cfg(feature = "async")]
-    fn add_async_method_with<'s, S: ?Sized + AsRef<str>, A, R, M, MR, G>(&mut self, name: &S, method: M, _generator: G)
-        where
-            'lua: 's,
-            T: 'static,
-            M: Fn(&'lua Lua, &'s T, A) -> MR + MaybeSend + 'static,
-            A: FromLuaMulti<'lua> + TypedMultiValue,
-            MR: std::future::Future<Output = mlua::Result<R>> + 's,
-            R: IntoLuaMulti<'lua> + TypedMultiValue,
-            G: Fn(&mut FunctionBuilder<A, R>) {
-        self.0.add_async_method(name, method)
+    fn add_async_method_with<S: ?Sized + AsRef<str>, A, R, M, MR, G>(
+        &mut self,
+        name: &S,
+        method: M,
+        _generator: G,
+    ) where
+        T: 'static,
+        M: Fn(Lua, UserDataRef<T>, A) -> MR + MaybeSend + 'static,
+        A: FromLuaMulti + TypedMultiValue,
+        MR: std::future::Future<Output = mlua::Result<R>> + 'static,
+        R: IntoLuaMulti + TypedMultiValue,
+        G: Fn(&mut FunctionBuilder<A, R>),
+    {
+        self.0.add_async_method(name.as_ref(), method)
     }
 
     #[cfg(feature = "async")]
-    fn add_async_method_mut<'s, S: ?Sized + AsRef<str>, A, R, M, MR>(&mut self, name: &S, method: M)
+    fn add_async_method_mut<S: ?Sized + AsRef<str>, A, R, M, MR>(&mut self, name: &S, method: M)
     where
-        'lua: 's,
         T: 'static,
-        M: Fn(&'lua Lua, &'s mut T, A) -> MR + MaybeSend + 'static,
-        A: FromLuaMulti<'lua> + TypedMultiValue,
-        MR: std::future::Future<Output = mlua::Result<R>> + 's,
-        R: IntoLuaMulti<'lua>,
+        M: Fn(Lua, UserDataRefMut<T>, A) -> MR + MaybeSend + 'static,
+        A: FromLuaMulti + TypedMultiValue,
+        MR: std::future::Future<Output = mlua::Result<R>> + 'static,
+        R: IntoLuaMulti,
     {
-        self.0.add_async_method_mut(name, method)
+        self.0.add_async_method_mut(name.as_ref(), method)
     }
 
     #[cfg(feature = "async")]
-    fn add_async_method_mut_with<'s, S: ?Sized + AsRef<str>, A, R, M, MR, G>(&mut self, name: &S, method: M, _generator: G)
-        where
-            'lua: 's,
-            T: 'static,
-            M: Fn(&'lua Lua, &'s mut T, A) -> MR + MaybeSend + 'static,
-            A: FromLuaMulti<'lua> + TypedMultiValue,
-            MR: std::future::Future<Output = mlua::Result<R>> + 's,
-            R: IntoLuaMulti<'lua> + TypedMultiValue,
-            G: Fn(&mut FunctionBuilder<A, R>) {
-        self.0.add_async_method_mut(name, method)
+    fn add_async_method_mut_with<S: ?Sized + AsRef<str>, A, R, M, MR, G>(
+        &mut self,
+        name: &S,
+        method: M,
+        _generator: G,
+    ) where
+        T: 'static,
+        M: Fn(Lua, UserDataRefMut<T>, A) -> MR + MaybeSend + 'static,
+        A: FromLuaMulti + TypedMultiValue,
+        MR: std::future::Future<Output = mlua::Result<R>> + 'static,
+        R: IntoLuaMulti + TypedMultiValue,
+        G: Fn(&mut FunctionBuilder<A, R>),
+    {
+        self.0.add_async_method_mut(name.as_ref(), method)
     }
 
     fn add_function_mut<S, A, R, F>(&mut self, name: &S, function: F)
@@ -278,24 +290,29 @@ impl<'ctx, T: UserData, U: UserDataMethods<T>> TypedDataMethods<T> for WrappedBu
     fn add_async_function<S: ?Sized, A, R, F, FR>(&mut self, name: &S, function: F)
     where
         S: AsRef<str>,
-        A: FromLuaMulti<'lua> + TypedMultiValue,
-        R: IntoLuaMulti<'lua> + TypedMultiValue,
-        F: 'static + MaybeSend + Fn(&'lua Lua, A) -> FR,
-        FR: 'lua + std::future::Future<Output = mlua::Result<R>>,
+        A: FromLuaMulti + TypedMultiValue,
+        R: IntoLuaMulti + TypedMultiValue,
+        F: 'static + MaybeSend + Fn(Lua, A) -> FR,
+        FR: std::future::Future<Output = mlua::Result<R>> + 'static,
     {
         self.0.add_async_function(name, function)
     }
 
     #[cfg(feature = "async")]
-    fn add_async_function_with<S: ?Sized, A, R, F, FR, G>(&mut self, name: &S, function: F, _generator: G)
-        where
-            S: AsRef<str>,
-            A: FromLuaMulti<'lua> + TypedMultiValue,
-            R: IntoLuaMulti<'lua> + TypedMultiValue,
-            F: 'static + MaybeSend + Fn(&'lua Lua, A) -> FR,
-            FR: 'lua + std::future::Future<Output = mlua::Result<R>>,
-            G: Fn(&mut FunctionBuilder<A, R>) {
-        self.0.add_async_function(name, function)
+    fn add_async_function_with<S: ?Sized, A, R, F, FR, G>(
+        &mut self,
+        name: &S,
+        function: F,
+        _generator: G,
+    ) where
+        S: AsRef<str>,
+        A: FromLuaMulti + TypedMultiValue,
+        R: IntoLuaMulti + TypedMultiValue,
+        F: 'static + MaybeSend + Fn(Lua, A) -> FR,
+        FR: std::future::Future<Output = mlua::Result<R>> + 'static,
+        G: Fn(&mut FunctionBuilder<A, R>),
+    {
+        self.0.add_async_function(name.as_ref(), function)
     }
 
     fn add_meta_method_mut<A, R, M>(&mut self, meta: MetaMethod, method: M)
