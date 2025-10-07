@@ -150,7 +150,7 @@ where
     /// Same as [Function::call] but with the param and return
     /// types already specified
     pub fn call(&self, params: Params) -> mlua::Result<Response> {
-        self.inner.call::<Params, Response>(params)
+        self.inner.call::<Response>(params)
     }
 
     /// Same as [Function::call] but with the param and return
@@ -160,7 +160,7 @@ where
     ///
     /// Panics if any lua errors occur
     pub unsafe fn call_unsafe(&self, params: Params) -> Response {
-        self.inner.call::<Params, Response>(params).unwrap()
+        self.inner.call::<Response>(params).unwrap()
     }
 
     /// Create a typed function from a rust function.
