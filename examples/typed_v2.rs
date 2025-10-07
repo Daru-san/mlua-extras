@@ -16,7 +16,7 @@ impl TypedModule for TestModule {
         Some("Test module documentation".into())
     }
 
-    fn add_fields<'lua, F: mlua_extras::typed::TypedModuleFields<'lua>>(fields: &mut F) -> mlua::Result<()> {
+    fn add_fields<F: mlua_extras::typed::TypedModuleFields>(fields: &mut F) -> mlua::Result<()> {
         fields
             .document("Some test data")
             .add_field("data", "Some data")?;
@@ -32,11 +32,11 @@ impl TypedModule for TestModule {
         Ok(())
     }
 
-    fn add_methods<'lua, M: mlua_extras::typed::TypedModuleMethods<'lua>>(methods: &mut M) -> mlua::Result<()> {
         methods
             .document("Greetings")
             .add_function_with("greet", |_, _name: String| { Ok(()) }, |func| {
                 func.param(0, |param| { 
+    fn add_methods<M: mlua_extras::typed::TypedModuleMethods>(methods: &mut M) -> mlua::Result<()> {
                     param
                         .set_doc("Name of the person to greet")
                         .set_name("name");

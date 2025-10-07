@@ -20,7 +20,7 @@ fn main() -> mlua::Result<()> {
     }?;
 
     // Extend an existing table with a function
-    let table = lua.globals().get::<_, Table>("table")?;
+    let table = lua.globals().get::<Table>("table")?;
     function! {
         lua fn table.keys(_lua, this: Table) {
             this.pairs::<Value, Value>()
