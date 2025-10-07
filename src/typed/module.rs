@@ -331,7 +331,7 @@ impl<'module, M: ModuleMethods> TypedModuleMethods for WrappedModule<'module, M>
     }
 }
 
-impl<'lua> TypedModuleFields<'lua> for TypedModuleBuilder {
+impl TypedModuleFields for TypedModuleBuilder {
     fn document<V: AsRef<str>>(&mut self, doc: V) -> &mut Self {
         self.queued_doc = Some(doc.as_ref().into());
         self
