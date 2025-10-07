@@ -83,10 +83,6 @@ impl_static_typed! {
 
 impl_static_typed_generic! {
     for<'a> Cow<'a, str> => "string",
-    for<'lua> mlua::Function<'lua> => "fun()",
-    for<'lua> mlua::AnyUserData<'lua> => "userdata",
-    for<'lua> mlua::String<'lua> => "string",
-    for<'lua> mlua::Thread<'lua> => "thread",
 }
 
 impl<T: Typed> Typed for Variadic<T> {

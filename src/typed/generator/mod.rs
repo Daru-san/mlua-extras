@@ -112,10 +112,10 @@ pub struct DefinitionBuilder<'def> {
 }
 impl<'def> DefinitionBuilder<'def> {
     /// Register a definition entry that is a function type
-    pub fn function<'lua, Params, Returns>(
+    pub fn function<Params, Returns>(
         mut self,
         name: impl Into<Cow<'def, str>>,
-        _: impl IntoTypedFunction<'lua, Params, Returns>,
+        _: impl IntoTypedFunction<Params, Returns>,
     ) -> Self
     where
         Params: TypedMultiValue,
@@ -129,11 +129,11 @@ impl<'def> DefinitionBuilder<'def> {
     /// Register a definition entry that is a function type
     ///
     /// Also add additional documentation
-    pub fn function_with<'lua, Params, Returns, F>(
+    pub fn function_with<Params, Returns, F>(
         mut self,
         name: impl Into<Cow<'def, str>>,
-        _: impl IntoTypedFunction<'lua, Params, Returns>,
-        generator: F
+        _: impl IntoTypedFunction<Params, Returns>,
+        generator: F,
     ) -> Self
     where
         Params: TypedMultiValue,
@@ -305,7 +305,7 @@ impl<'def> DefinitionBuilder<'def> {
     ///         docs.add("This is an example");
     ///     }
     ///     
-    ///     fn add_fields<'lua, F: TypedDataFields<'lua, Self>>(fields: &mut F) {
+    ///     fn add_fields<F: TypedDataFields<Self>>(fields: &mut F) {
     ///         fields
     ///             .document("Example field")
     ///             .add_field_method_get_set(

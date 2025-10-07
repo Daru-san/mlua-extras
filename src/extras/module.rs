@@ -6,12 +6,12 @@ use crate::MaybeSend;
 
 #[derive(Default)]
 pub struct LuaModule<M>(PhantomData<M>);
-impl<'lua, M: Module> IntoLua<'lua> for LuaModule<M> {
+impl<M: Module> IntoLua for LuaModule<M> {
     fn into_lua(
         self,
-        lua: &'lua mlua::prelude::Lua,
-    ) -> mlua::prelude::LuaResult<mlua::prelude::LuaValue<'lua>> {
-        let mut builder: ModuleBuilder<'lua> = ModuleBuilder {
+        lua: &mlua::prelude::Lua,
+    ) -> mlua::prelude::LuaResult<mlua::prelude::LuaValue> {
+        let mut builder: ModuleBuilder = ModuleBuilder {
             table: lua.create_table()?,
             lua,
             parents: Vec::new(),
@@ -28,13 +28,13 @@ impl<'lua, M: Module> IntoLua<'lua> for LuaModule<M> {
 pub trait Module: Sized {
     /// Add fields to the module
     #[allow(unused_variables)]
-    fn add_fields<'lua, F: ModuleFields<'lua>>(fields: &mut F) -> mlua::Result<()> {
+    fn add_fields<F: ModuleFields>(fields: &mut F) -> mlua::Result<()> {
         Ok(())
     }
-    
+
     /// Add methods/functions to the module
     #[allow(unused_variables)]
-    fn add_methods<'lua, M: ModuleMethods<'lua>>(methods: &mut M) -> mlua::Result<()> {
+    fn add_methods<M: ModuleMethods>(methods: &mut M) -> mlua::Result<()> {
         Ok(())
     }
 
@@ -44,87 +44,87 @@ pub trait Module: Sized {
 }
 
 /// Add table fields for a module
-pub trait ModuleFields<'lua> {
+pub trait ModuleFields {
     /// Add a field to the module's table
     fn add_field<K, V>(&mut self, name: K, value: V) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
-        V: IntoLua<'lua>;
+        K: IntoLua,
+        V: IntoLua;
 
     /// Add a field to the module's metatable
     fn add_meta_field<K, V>(&mut self, name: K, value: V) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
-        V: IntoLua<'lua>;
+        K: IntoLua,
+        V: IntoLua;
 
     /// Add a nested module as a table in this module
     fn add_module<K, V>(&mut self, name: K) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
+        K: IntoLua,
         V: Module;
 }
 
 /// Add table functions and methods for a module
-pub trait ModuleMethods<'lua> {
+pub trait ModuleMethods {
     /// Add a function to this module's table
     fn add_function<K, F, A, R>(&mut self, name: K, function: F) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
+        K: IntoLua,
         F: Fn(&mlua::Lua, A) -> mlua::Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add a function to this module's metatable
     fn add_meta_function<K, F, A, R>(&mut self, name: K, function: F) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
+        K: IntoLua,
         F: Fn(&mlua::Lua, A) -> mlua::Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add a method to this module's table
     fn add_method<K, F, A, R>(&mut self, name: K, function: F) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
-        F: Fn(&mlua::Lua, mlua::Table<'_>, A) -> mlua::Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        K: IntoLua,
+        F: Fn(&mlua::Lua, mlua::Table, A) -> mlua::Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 
     /// Add a method to this module's metatable
     fn add_meta_method<K, F, A, R>(&mut self, name: K, function: F) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
-        F: Fn(&mlua::Lua, mlua::Table<'_>, A) -> mlua::Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>;
+        K: IntoLua,
+        F: Fn(&mlua::Lua, mlua::Table, A) -> mlua::Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti;
 }
 
 /// Builder that construct a module based on the [`Module`] trait
-pub struct ModuleBuilder<'lua> {
-    lua: &'lua mlua::Lua,
-    table: mlua::Table<'lua>,
+pub struct ModuleBuilder<'a> {
+    lua: &'a mlua::Lua,
+    table: mlua::Table,
     parents: Vec<&'static str>,
 }
 
-impl<'lua> ModuleFields<'lua> for ModuleBuilder<'lua> {
+impl<'a> ModuleFields for ModuleBuilder<'a> {
     fn add_field<K, V>(&mut self, name: K, value: V) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
-        V: IntoLua<'lua>,
+        K: IntoLua,
+        V: IntoLua,
     {
         self.table.set(name, value)
     }
 
     fn add_meta_field<K, V>(&mut self, name: K, value: V) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
-        V: IntoLua<'lua>,
+        K: IntoLua,
+        V: IntoLua,
     {
-        let meta = match self.table.get_metatable() {
+        let meta = match self.table.metatable() {
             Some(meta) => meta,
             None => {
                 let meta = self.lua.create_table()?;
-                self.table.set_metatable(Some(meta.clone()));
+                self.table.set_metatable(Some(meta.clone()))?;
                 meta
             }
         };
@@ -134,7 +134,7 @@ impl<'lua> ModuleFields<'lua> for ModuleBuilder<'lua> {
 
     fn add_module<K, V>(&mut self, name: K) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
+        K: IntoLua,
         V: Module,
     {
         if self.parents.contains(&type_name::<V>()) {
@@ -144,7 +144,7 @@ impl<'lua> ModuleFields<'lua> for ModuleBuilder<'lua> {
             )));
         }
 
-        let mut builder: ModuleBuilder<'lua> = ModuleBuilder {
+        let mut builder: ModuleBuilder = ModuleBuilder {
             table: self.lua.create_table()?,
             lua: self.lua,
             parents: self
@@ -162,29 +162,29 @@ impl<'lua> ModuleFields<'lua> for ModuleBuilder<'lua> {
     }
 }
 
-impl<'lua> ModuleMethods<'lua> for ModuleBuilder<'lua> {
+impl<'a> ModuleMethods for ModuleBuilder<'a> {
     fn add_function<K, F, A, R>(&mut self, name: K, function: F) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
+        K: IntoLua,
         F: Fn(&mlua::Lua, A) -> mlua::Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>,
+        A: FromLuaMulti,
+        R: IntoLuaMulti,
     {
         self.table.set(name, self.lua.create_function(function)?)
     }
 
     fn add_meta_function<K, F, A, R>(&mut self, name: K, function: F) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
+        K: IntoLua,
         F: Fn(&mlua::Lua, A) -> mlua::Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>,
+        A: FromLuaMulti,
+        R: IntoLuaMulti,
     {
-        let meta = match self.table.get_metatable() {
+        let meta = match self.table.metatable() {
             Some(meta) => meta,
             None => {
                 let meta = self.lua.create_table()?;
-                self.table.set_metatable(Some(meta.clone()));
+                self.table.set_metatable(Some(meta.clone()))?;
                 meta
             }
         };
@@ -194,10 +194,10 @@ impl<'lua> ModuleMethods<'lua> for ModuleBuilder<'lua> {
 
     fn add_method<K, F, A, R>(&mut self, name: K, function: F) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
-        F: Fn(&mlua::Lua, mlua::Table<'_>, A) -> mlua::Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>,
+        K: IntoLua,
+        F: Fn(&mlua::Lua, mlua::Table, A) -> mlua::Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti,
     {
         self.table.set(
             name,
@@ -212,16 +212,16 @@ impl<'lua> ModuleMethods<'lua> for ModuleBuilder<'lua> {
 
     fn add_meta_method<K, F, A, R>(&mut self, name: K, function: F) -> mlua::Result<()>
     where
-        K: IntoLua<'lua>,
-        F: Fn(&mlua::Lua, mlua::Table<'_>, A) -> mlua::Result<R> + MaybeSend + 'static,
-        A: FromLuaMulti<'lua>,
-        R: IntoLuaMulti<'lua>,
+        K: IntoLua,
+        F: Fn(&mlua::Lua, mlua::Table, A) -> mlua::Result<R> + MaybeSend + 'static,
+        A: FromLuaMulti,
+        R: IntoLuaMulti,
     {
-        let meta = match self.table.get_metatable() {
+        let meta = match self.table.metatable() {
             Some(meta) => meta,
             None => {
                 let meta = self.lua.create_table()?;
-                self.table.set_metatable(Some(meta.clone()));
+                self.table.set_metatable(Some(meta.clone()))?;
                 meta
             }
         };
