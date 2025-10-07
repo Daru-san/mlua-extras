@@ -253,7 +253,7 @@ impl<'ctx, T: UserData, U: UserDataMethods<T>> TypedDataMethods<T> for WrappedBu
         R: IntoLuaMulti + TypedMultiValue,
         F: 'static + MaybeSend + FnMut(&Lua, A) -> mlua::Result<R>,
     {
-        self.0.add_function_mut(name, function)
+        self.0.add_function_mut(name.as_ref(), function)
     }
 
     fn add_function_mut_with<S, A, R, F, G>(&mut self, name: &S, function: F, _generator: G)
@@ -295,7 +295,7 @@ impl<'ctx, T: UserData, U: UserDataMethods<T>> TypedDataMethods<T> for WrappedBu
         F: 'static + MaybeSend + Fn(Lua, A) -> FR,
         FR: std::future::Future<Output = mlua::Result<R>> + 'static,
     {
-        self.0.add_async_function(name, function)
+        self.0.add_async_function(name.as_ref(), function)
     }
 
     #[cfg(feature = "async")]
