@@ -56,6 +56,25 @@ macro_rules! impl_static_typed {
 macro_rules! impl_static_typed_generic {
     {
         $(
+            $(for $target: ty)|*
+            => $name: literal),*
+            $(,)?
+    } => {
+        $(
+            $(
+                impl Typed for $target {
+                    fn ty() -> Type {
+                        Type::single($name)
+                    }
+                }
+            )*
+        )*
+    };
+}
+
+macro_rules! impl_static_typed_generic_with_lifetime {
+    {
+        $(
             $(for<$($lt: lifetime),+> $target: ty)|*
             => $name: literal),*
             $(,)?
@@ -81,8 +100,15 @@ impl_static_typed! {
     bool => "boolean",
 }
 
-impl_static_typed_generic! {
+impl_static_typed_generic_with_lifetime! {
     for<'a> Cow<'a, str> => "string",
+}
+
+impl_static_typed_generic! {
+    for mlua::Function => "fun()",
+    for mlua::AnyUserData => "userdata",
+    for mlua::String => "string",
+    for mlua::Thread => "thread",
 }
 
 impl<T: Typed> Typed for Variadic<T> {
