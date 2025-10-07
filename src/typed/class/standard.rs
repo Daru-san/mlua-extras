@@ -115,10 +115,10 @@ impl<T: TypedUserData> TypedDataFields<T> for TypedClassBuilder {
     fn add_field_function_get_set<S, R, A, GET, SET>(&mut self, name: &S, _: GET, _: SET)
     where
         S: AsRef<str> + ?Sized,
-        R: IntoLua<'lua> + Typed,
-        A: FromLua<'lua> + Typed,
-        GET: 'static + MaybeSend + Fn(&'lua Lua, AnyUserData<'lua>) -> mlua::Result<R>,
-        SET: 'static + MaybeSend + Fn(&'lua Lua, AnyUserData<'lua>, A) -> mlua::Result<()>,
+        R: IntoLua + Typed,
+        A: FromLua + Typed,
+        GET: 'static + MaybeSend + Fn(&Lua, AnyUserData) -> mlua::Result<R>,
+        SET: 'static + MaybeSend + Fn(&Lua, AnyUserData, A) -> mlua::Result<()>,
     {
         let name: Cow<'static, str> = name.as_ref().to_string().into();
         self.static_fields

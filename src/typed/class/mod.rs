@@ -269,11 +269,15 @@ pub trait TypedDataMethods<T> {
         F: 'static + MaybeSend + FnMut(&Lua, A) -> mlua::Result<R>;
 
     ///Exposes a meta and mutable function to lua [http://lua-users.org/wiki/MetatableEvents](http://lua-users.org/wiki/MetatableEvents)
-    fn add_meta_function_mut_with<A, R, F, G>(&mut self, meta: MetaMethod, function: F, generator: G)
-    where
-        A: FromLuaMulti<'lua> + TypedMultiValue,
-        R: IntoLuaMulti<'lua> + TypedMultiValue,
-        F: 'static + MaybeSend + FnMut(&'lua Lua, A) -> mlua::Result<R>,
+    fn add_meta_function_mut_with<A, R, F, G>(
+        &mut self,
+        meta: MetaMethod,
+        function: F,
+        generator: G,
+    ) where
+        A: FromLuaMulti + TypedMultiValue,
+        R: IntoLuaMulti + TypedMultiValue,
+        F: 'static + MaybeSend + FnMut(&Lua, A) -> mlua::Result<R>,
         G: Fn(&mut FunctionBuilder<A, R>);
 
     ///Adds documentation to the next method/function that gets added
