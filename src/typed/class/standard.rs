@@ -32,11 +32,11 @@ pub struct TypedClassBuilder {
 
 impl TypedClassBuilder {
     pub fn new<T: TypedUserData>() -> Self {
-        let mut gen = Self::default();
-        T::add_documentation(&mut gen);
-        T::add_fields(&mut gen);
-        T::add_methods(&mut gen);
-        gen
+        let mut generator = Self::default();
+        T::add_documentation(&mut generator);
+        T::add_fields(&mut generator);
+        T::add_methods(&mut generator);
+        generator
     }
 }
 
