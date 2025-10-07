@@ -59,14 +59,13 @@ fn main() -> mlua::Result<()> {
         }
     }?;
 
-    assert_eq!(custom_function.call::<_, usize>((1, 2))?, 3);
+    assert_eq!(usize::from_lua(custom_function.call((1, 2))?, &lua)?, 3);
     assert_eq!(
-        temp.require::<Function>("add")?.call::<_, usize>((1, 2))?,
+        usize::from_lua(temp.require::<Function>("add")?.call((1, 2))?, &lua)?,
         3
     );
     assert_eq!(
-        temp.require::<Function>("nested.add")?
-            .call::<_, usize>((1, 2))?,
+        usize::from_lua(temp.require::<Function>("nested.add")?.call((1, 2))?, &lua)?,
         3
     );
 
